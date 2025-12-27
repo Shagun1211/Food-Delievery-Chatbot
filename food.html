@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Food Ordering Chatbot</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="chat-container">
+    <div class="chat-header">🍕 Food Chatbot</div>
+
+    <div class="chat-box" id="chatBox">
+        <div class="bot-message">Hi 👋 What would you like to order?</div>
+    </div>
+
+    <div class="input-area">
+        <input type="text" id="userInput" placeholder="Type: add 2 pizza">
+        <button onclick="sendMessage()">Send</button>
+    </div>
+</div>
+
+<script>
+async function sendMessage() {
+    const input = document.getElementById("userInput");
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMessage(text, "user");
+    input.value = "";
+
+    const webhookURL = "https://jaunita-unfought-forbiddingly.ngrok-free.dev/webhook";
+
+    const payload = {
+        queryResult: {
+            parameters: {
+                food: extractFood(text),
+                number: extractNumber(text)
+            }
+        },
+        session: "web-session-1"
+    };
+
+    try {
+        const response = await fetch(webhookURL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+
+        const data = await response.json();
+        addMessage(data.fulfillmentText || "No response", "bot");
+
+    } catch (err) {
+        addMessage("Server not reachable ❌", "bot");
+    }
+}
+
+function addMessage(text, sender) {
+    const chatBox = document.getElementById("chatBox");
+    const div = document.createElement("div");
+    div.className = sender === "user" ? "user-message" : "bot-message";
+    div.innerText = text;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+}
+
+function extractNumber(text) {
+    const match = text.match(/\d+/);
+    return match ? parseInt(match[0]) : 1;
+}
+
+function extractFood(text) {
+    return text.replace(/\d+/g, "").replace("add", "").trim().toLowerCase();
+}
+</script>
+
+</body>
+</html>
